@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
+    <title>Page Translator</title>
+    <style>
+      body {
+        inline-size: max-content;
+      }
+
+      .row {
+        margin-block-end: 0.5rem;
+      }
+
+      label {
+        margin-inline-end: 0.5rem;
+        white-space: nowrap;
+      }
+
+      select {
+        inline-size: 100%;
+        margin-block-start: 0.25rem;
+      }
+    </style>
+    <script type="module" src="popup.js"></script>
+  </head>
+
+  <body>
+    <div class="row">
+      <label>
+        <input type="radio" name="mode" value="original" checked>
+        Original
+      </label>
+      <label>
+        <input type="radio" name="mode" value="translated">
+        Translated
+      </label>
+    </div>
+
+    <div class="row">
+      <label>Source Language</label>
+      <select id="source-lang"></select>
+    </div>
+
+    <div class="row">
+      <label>Target Language</label>
+      <select id="target-lang"></select>
+    </div>
+  </body>
+</html>

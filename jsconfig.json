@@ -1,0 +1,15 @@
+{
+  "$schema": "https://www.schemastore.org/jsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "checkJs": true
+  },
+  "typeAcquisition": {
+    "include": [
+      "chrome"
+    ]
+  }
+}
