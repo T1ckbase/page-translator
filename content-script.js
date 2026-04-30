@@ -446,7 +446,10 @@ class PageTranslator {
     };
 
     this.originalLang = null;
+    this.originalXmlLang = null;
     this.translating = false;
+    this.sourceLang = null;
+    this.targetLang = null;
     /** @type {Map<TextItem, string>} */
     this.nodeMap = new Map();
     /** @type {Map<Text, string | null>} */
@@ -484,8 +487,13 @@ class PageTranslator {
       return;
     }
 
+    if (this.nodeMap.size > 0) {
+      this.restore();
+    }
+
     this.translating = true;
-    this.originalLang = document.documentElement.lang;
+    this.originalLang = document.documentElement.getAttribute('lang');
+    this.originalXmlLang = document.documentElement.getAttribute('xml:lang');
     this.nodeMap.clear();
     this.originalTextMap.clear();
     this.originalAttrMap.clear();
@@ -496,7 +504,8 @@ class PageTranslator {
       }
 
       if (sourceLang === targetLang) {
-        this.translating = false;
+        this.sourceLang = sourceLang;
+        this.targetLang = targetLang;
         return;
       }
 
@@ -553,6 +562,8 @@ class PageTranslator {
       }
 
       this.applyTranslations(targetLang);
+      this.sourceLang = sourceLang;
+      this.targetLang = targetLang;
 
       this.options.onComplete({
         totalNodes: this.nodeMap.size,
@@ -561,6 +572,7 @@ class PageTranslator {
       });
     } catch (error) {
       this.options.onError(error);
+      throw error;
     } finally {
       this.translating = false;
     }
@@ -611,14 +623,67 @@ class PageTranslator {
       });
     });
 
-    document.documentElement.lang = this.originalLang || '';
+    if (this.originalLang === null) {
+      document.documentElement.removeAttribute('lang');
+    } else {
+      document.documentElement.setAttribute('lang', this.originalLang);
+    }
+    if (this.originalXmlLang === null) {
+      document.documentElement.removeAttribute('xml:lang');
+    } else {
+      document.documentElement.setAttribute('xml:lang', this.originalXmlLang);
+    }
+    this.sourceLang = null;
+    this.targetLang = null;
     this.nodeMap.clear();
     this.originalTextMap.clear();
     this.originalAttrMap.clear();
   }
+
+  getState() {
+    return {
+      mode: this.nodeMap.size > 0 ? 'translated' : 'original',
+      sourceLang: this.sourceLang,
+      targetLang: this.targetLang,
+      translating: this.translating,
+      translatedNodes: this.nodeMap.size,
+    };
+  }
 }
 
-// const translator = new GoogleTranslator();
-// const pageTranslator = new PageTranslator(translator);
-//
-// pageTranslator.translate('auto', 'zh-TW');
+const translator = new GoogleTranslator();
+const pageTranslator = new PageTranslator(translator);
+
+function getErrorMessage(error) {
+  return error instanceof Error ? error.message : 'Unknown translation error.';
+}
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (!message || typeof message.type !== 'string' || !message.type.startsWith('pageTranslator:')) {
+    return undefined;
+  }
+
+  (async () => {
+    try {
+      switch (message.type) {
+        case 'pageTranslator:getState':
+          sendResponse(pageTranslator.getState());
+          break;
+        case 'pageTranslator:translate':
+          await pageTranslator.translate(message.sourceLang, message.targetLang);
+          sendResponse(pageTranslator.getState());
+          break;
+        case 'pageTranslator:restore':
+          pageTranslator.restore();
+          sendResponse(pageTranslator.getState());
+          break;
+        default:
+          sendResponse({ error: `Unsupported message type: ${message.type}` });
+      }
+    } catch (error) {
+      sendResponse({ error: getErrorMessage(error) });
+    }
+  })();
+
+  return true;
+});

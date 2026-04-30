@@ -1,28 +1,52 @@
-import languages from './languages.json' with { type: 'json' };
+import {
+  DEFAULT_SETTINGS,
+  getSettings,
+  languages,
+  populateLanguageSelect,
+  saveSettings,
+  setSelectValue,
+} from './settings.js';
 
-{
-  const fragment = document.createDocumentFragment();
-  for (const [value, label] of Object.entries(languages.sl)) {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = label;
-    fragment.appendChild(option);
-  }
+const form = document.querySelector('#options-form');
+const sourceSelect = document.querySelector('#source-lang');
+const targetSelect = document.querySelector('#target-lang');
+const status = document.querySelector('#status');
 
-  document.querySelector('#source-lang').appendChild(fragment);
+populateLanguageSelect(sourceSelect, languages.sl);
+populateLanguageSelect(targetSelect, languages.tl);
+
+function showStatus(message, isError = false) {
+  status.textContent = message;
+  status.style.color = isError ? 'crimson' : '';
 }
 
-{
-  const fragment = document.createDocumentFragment();
-  for (const [value, label] of Object.entries(languages.tl)) {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = label;
-    fragment.appendChild(option);
-  }
-
-  document.querySelector('#target-lang').appendChild(fragment);
+async function loadOptions() {
+  const settings = await getSettings();
+  setSelectValue(sourceSelect, settings.sourceLang, DEFAULT_SETTINGS.sourceLang);
+  setSelectValue(targetSelect, settings.targetLang, DEFAULT_SETTINGS.targetLang);
 }
 
-// On target language change
-await chrome.contextMenus.update('trnaslate', { title: `Translate to ${'new language'}` }); // TODO
+async function persistOptions() {
+  form.ariaBusy = 'true';
+
+  try {
+    await saveSettings({
+      sourceLang: sourceSelect.value,
+      targetLang: targetSelect.value,
+    });
+    showStatus('Options saved.');
+  } catch (error) {
+    showStatus(error instanceof Error ? error.message : 'Failed to save options.', true);
+  } finally {
+    form.ariaBusy = 'false';
+  }
+}
+
+sourceSelect.addEventListener('change', persistOptions);
+targetSelect.addEventListener('change', persistOptions);
+
+try {
+  await loadOptions();
+} catch (error) {
+  showStatus(error instanceof Error ? error.message : 'Failed to load options.', true);
+}
