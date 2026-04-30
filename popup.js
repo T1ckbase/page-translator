@@ -1,11 +1,4 @@
-import {
-  DEFAULT_SETTINGS,
-  getSettings,
-  languages,
-  populateLanguageSelect,
-  saveSettings,
-  setSelectValue,
-} from './settings.js';
+import { DEFAULT_SETTINGS, getSettings, languages, populateLanguageSelect, setSelectValue } from './settings.js';
 
 const sourceSelect = document.querySelector('#source-lang');
 const targetSelect = document.querySelector('#target-lang');
@@ -101,13 +94,6 @@ async function applyTranslationState() {
   showStatus('Original page restored.');
 }
 
-async function persistSettings() {
-  await saveSettings({
-    sourceLang: sourceSelect.value,
-    targetLang: targetSelect.value,
-  });
-}
-
 async function syncPopupState() {
   syncingUi = true;
 
@@ -140,7 +126,6 @@ async function handleUiChange() {
   setDisabled(true);
 
   try {
-    await persistSettings();
     await applyTranslationState();
   } catch (error) {
     showStatus(error instanceof Error ? error.message : 'This page cannot be translated.', true);
