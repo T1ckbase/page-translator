@@ -1,5 +1,14 @@
-https://translate.google.com/translate_a/element.js -> element.js
+Original minified code: m=el_main.js
 
-https://translate.googleapis.com/_/translate_http/_/js/k=translate_http.tr.en_US.2T5T7GsNubI.O/am=AAAAAQ/d=1/exm=el_conf/ed=1/rs=AN8SPfqsrXVHFrnJTfMNHbApjHDolh2CWQ/m=el_main -> el_main.js
+Extract only the core page translation logic, removing:
+- Polyfills
+- Closure Library framework
+- UI widgets (TranslateElement)
+- Analytics/telemetry
+- Spelling suggestions
+- Voting feedback
 
-https://translate.googleapis.com/translate_a/l?client=chrome&hl=en -> languages.json
+Use only this API endpoint:
+- `https://translate-pa.googleapis.com/v1/translateHtml` (POST)
+
+Use modern ES2025 JavaScript syntax and browser APIs only.
