@@ -1,4 +1,5 @@
 import { DEFAULT_SETTINGS, getSettings, getTargetLanguageLabel } from './settings.js';
+import { sendPageMessage } from './frame-messaging.js';
 
 const MENU_ID = 'translate';
 
@@ -28,37 +29,13 @@ async function ensureDefaultSettings() {
   });
 }
 
-async function ensureController(tabId) {
-  let state;
-
-  try {
-    state = await chrome.tabs.sendMessage(tabId, { type: 'pageTranslator:getState' });
-  } catch (_error) {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['content-script.js'],
-    });
-
-    state = await chrome.tabs.sendMessage(tabId, { type: 'pageTranslator:getState' });
-  }
-
-  if (state?.error) {
-    throw new Error(state.error);
-  }
-}
-
 async function translateTab(tabId) {
   const settings = await getSettings();
-  await ensureController(tabId);
-  const response = await chrome.tabs.sendMessage(tabId, {
+  await sendPageMessage(tabId, {
     type: 'pageTranslator:translate',
     sourceLang: settings.sourceLang,
     targetLang: settings.targetLang,
   });
-
-  if (response?.error) {
-    throw new Error(response.error);
-  }
 }
 
 chrome.runtime.onInstalled.addListener(async () => {

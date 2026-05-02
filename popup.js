@@ -1,4 +1,5 @@
 import { DEFAULT_SETTINGS, getSettings, languages, populateLanguageSelect, setSelectValue } from './settings.js';
+import { getPageState, sendPageMessage } from './frame-messaging.js';
 
 const sourceSelect = document.querySelector('#source-lang');
 const targetSelect = document.querySelector('#target-lang');
@@ -44,36 +45,8 @@ async function getActiveTabId() {
   return tab.id;
 }
 
-async function ensureController(tabId) {
-  let state;
-
-  try {
-    state = await chrome.tabs.sendMessage(tabId, { type: 'pageTranslator:getState' });
-  } catch (_error) {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['content-script.js'],
-    });
-
-    state = await chrome.tabs.sendMessage(tabId, { type: 'pageTranslator:getState' });
-  }
-
-  if (state?.error) {
-    throw new Error(state.error);
-  }
-
-  return state;
-}
-
 async function sendControllerMessage(message) {
-  await ensureController(activeTabId);
-  const response = await chrome.tabs.sendMessage(activeTabId, message);
-
-  if (response?.error) {
-    throw new Error(response.error);
-  }
-
-  return response;
+  return sendPageMessage(activeTabId, message);
 }
 
 async function applyTranslationState() {
@@ -102,7 +75,7 @@ async function syncPopupState() {
     setSelectValue(sourceSelect, settings.sourceLang, DEFAULT_SETTINGS.sourceLang);
     setSelectValue(targetSelect, settings.targetLang, DEFAULT_SETTINGS.targetLang);
 
-    const pageState = await ensureController(activeTabId);
+    const pageState = await getPageState(activeTabId);
 
     if (pageState.mode === 'translated') {
       setMode('translated');
