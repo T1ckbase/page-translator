@@ -1,6 +1,6 @@
 # Page Translator
 
-Vibe-sloped Page Translator Extension for Ungoogled Chromium
+Vibe-slopped Page Translator Extension for Ungoogled Chromium
 
 ## Format
 
